@@ -1,24 +1,52 @@
-// Import necessary hooks and functions from React.
-import { useContext, useReducer, createContext } from "react";
-import storeReducer, { initialStore } from "../store"  // Import the reducer and the initial state.
+import React, { createContext, useContext, useReducer } from 'react';
 
-// Create a context to hold the global state of the application
-// We will call this global state the "store" to avoid confusion while using local states
-const StoreContext = createContext()
+const GlobalContext = createContext();
 
-// Define a provider component that encapsulates the store and warps it in a context provider to 
-// broadcast the information throught all the app pages and components.
-export function StoreProvider({ children }) {
-    // Initialize reducer with the initial state.
-    const [store, dispatch] = useReducer(storeReducer, initialStore())
-    // Provide the store and dispatch method to all child components.
-    return <StoreContext.Provider value={{ store, dispatch }}>
-        {children}
-    </StoreContext.Provider>
-}
+const estadoInicial = {
+  cargando: false,
+  favoritos: [],
+  elementos: []
+};
 
-// Custom hook to access the global state and dispatch function.
-export default function useGlobalReducer() {
-    const { dispatch, store } = useContext(StoreContext)
-    return { dispatch, store };
-}
+const reducer = (state, action) => {
+  switch (action.tipo) {
+    case 'TOGGLE_FAVORITO':
+      const existe = state.favoritos.some(fav => 
+        fav.id === action.item.id && fav.tipo === action.item.tipo
+      );
+      
+      return {
+        ...state,
+        favoritos: existe
+          ? state.favoritos.filter(fav => 
+              fav.id !== action.item.id || fav.tipo !== action.item.tipo
+            )
+          : [...state.favoritos, action.item]
+      };
+
+    case 'SET_CARGANDO':
+      return { ...state, cargando: action.valor };
+
+    case 'SET_ELEMENTOS':
+      return { ...state, elementos: action.elementos };
+
+    default:
+      return state;
+  }
+};
+
+export const GlobalProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(reducer, estadoInicial);
+
+  return (
+    <GlobalContext.Provider value={{ estado: state, dispatch }}>
+      {children}
+    </GlobalContext.Provider>
+  );
+};
+
+export const useGlobal = () => {
+  const context = useContext(GlobalContext);
+  if (!context) throw new Error("Usar dentro de GlobalProvider");
+  return context;
+};

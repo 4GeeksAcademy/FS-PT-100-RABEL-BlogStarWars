@@ -1,0 +1,10 @@
+:root {
+  --sw-primary: #2b3035;
+  --sw-secondary: #6c757d;
+  --sw-accent: #ffc107;
+}
+
+.btn-warning {
+  background-color: var(--sw-accent);
+  border-color: var(--sw-accent);
+}

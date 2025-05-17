@@ -1,37 +1,112 @@
-// Import necessary hooks and components from react-router-dom and other libraries.
-import { Link, useParams } from "react-router-dom";  // To use link for navigation and useParams to get URL parameters
-import PropTypes from "prop-types";  // To define prop types for this component
-import rigoImageUrl from "../assets/img/rigo-baby.jpg"  // Import an image asset
-import useGlobalReducer from "../hooks/useGlobalReducer";  // Import a custom hook for accessing the global state
 
-// Define and export the Single component which displays individual item details.
-export const Single = props => {
-  // Access the global state using the custom hook.
-  const { store } = useGlobalReducer()
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom'; // Añadir importación de Link
+import { Alert, Spinner, Card, ListGroup } from 'react-bootstrap';
 
-  // Retrieve the 'theId' URL parameter using useParams hook.
-  const { theId } = useParams()
-  const singleTodo = store.todos.find(todo => todo.id === parseInt(theId));
+const Single = () => {
+  const { tipo, id } = useParams();
+  const [elemento, setElemento] = useState(null);
+  const [error, setError] = useState(null);
+
+  
+  const tiposImagen = {
+    people: 'characters',
+    planets: 'planets',
+    vehicles: 'vehicles'
+  };
+
+  useEffect(() => {
+    const obtenerDetalle = async () => {
+      try {
+        
+        if (!tipo || !id || isNaN(id)) {
+        throw new Error('URL inválida');
+      }
+        
+        const respuesta = await fetch(`https://www.swapi.tech/api/${tipo}/${id}`);
+        
+        if (!respuesta.ok) throw new Error(`Error ${respuesta.status}`);
+        
+        const datos = await respuesta.json();
+        
+        if (!datos?.result?.properties) {
+          throw new Error('Datos no encontrados');
+        }
+
+        setElemento(datos.result.properties);
+        
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    obtenerDetalle();
+  }, [tipo, id]);
+
+  if (error) {
+    return (
+      <div className="container mt-4">
+        <Alert variant="danger">
+          <Alert.Heading>¡Error!</Alert.Heading>
+          <p>{error}</p>
+          <Link to="/" className="btn btn-primary">
+            ← Volver al inicio
+          </Link>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!elemento) {
+    return (
+      <div className="text-center mt-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">Cargando datos...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="container text-center">
-      {/* Display the title of the todo element dynamically retrieved from the store using theId. */}
-      <h1 className="display-4">Todo: {singleTodo?.title}</h1>
-      <hr className="my-4" />  {/* A horizontal rule for visual separation. */}
-
-      {/* A Link component acts as an anchor tag but is used for client-side routing to prevent page reloads. */}
-      <Link to="/">
-        <span className="btn btn-primary btn-lg" href="#" role="button">
-          Back home
-        </span>
-      </Link>
+    <div className="container mt-4">
+      <Card className="shadow-lg">
+        <div className="row g-0">
+          <div className="col-md-4 bg-dark p-3">
+            <Card.Img
+              src={`https://starwars-visualguide.com/assets/img/${tiposImagen[tipo]}/${id}.jpg`}
+              alt={elemento.name}
+              onError={(e) => {
+                e.target.src = 'https://placehold.co/600x800?text=Imagen+no+disponible';
+                e.target.className = 'img-fluid';
+              }}
+            />
+          </div>
+          
+          <div className="col-md-8">
+            <Card.Body className="p-4">
+              <Card.Title className="display-4 mb-4">{elemento.name}</Card.Title>
+              <ListGroup variant="flush">
+                {Object.entries(elemento).map(([key, value]) => (
+                  key !== 'url' && (
+                    <ListGroup.Item 
+                      key={key}
+                      className="d-flex justify-content-between align-items-center py-3"
+                    >
+                      <span className="text-capitalize fw-medium">
+                        {key.replace(/_/g, ' ')}:
+                      </span>
+                      <span className="text-muted">
+                        {value || 'No disponible'}
+                      </span>
+                    </ListGroup.Item>
+                  )
+                ))}
+              </ListGroup>
+            </Card.Body>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
 
-// Use PropTypes to validate the props passed to this component, ensuring reliable behavior.
-Single.propTypes = {
-  // Although 'match' prop is defined here, it is not used in the component.
-  // Consider removing or using it as needed.
-  match: PropTypes.object
-};
+export default Single;
