@@ -13,23 +13,45 @@ const Tarjeta = ({ item }) => {
     vehicles: 'vehicles'
   };
 
-  const manejarFavorito = () => {
-    dispatch({
-      tipo: 'TOGGLE_FAVORITO',
-      item: {
-        id: item.id,
-        tipo: item.tipo,
-        nombre: item.nombre,
-        detalles: item.detalles
-      }
-    });
-  };
+ const manejarFavorito = async () => {
+  const userId = 1; // ID fijo temporal
+  const baseUrl = import.meta.env.VITE_BACKEND_URL || "https://expert-space-enigma-jjqxwggwj9xx2qg46-3000.app.github.dev";
+
+  const tipoEndpoint = {
+    people: "people",
+    planets: "planet",
+    vehicles: "vehicle"
+  }[item.tipo];
+
+  // Actualiza estado global
+  dispatch({-
+    tipo: 'TOGGLE_FAVORITO',
+    item: {
+      id: item.id,
+      tipo: item.tipo,
+      nombre: item.nombre,
+      detalles: item.detalles
+    }
+  });
+
+  try {
+    const metodo = esFavorito ? "DELETE" : "POST";
+    const url = `${baseUrl}/favorite/${tipoEndpoint}/${item.id}?user_id=${userId}`;
+
+    const resp = await fetch(url, { method: metodo });
+    if (!resp.ok) throw new Error("Error en el backend");
+  } catch (err) {
+    console.error("Error al guardar favorito:", err.message);
+  }
+};
+
+
 
   return (
     <Card className="h-100 shadow-sm">
       <Card.Img
         variant="top"
-        src={`https://starwars-visualguide.com/assets/img/${tiposImagen[item.tipo]}/${item.id}.jpg`}
+        src={`https://starwars-visualguide.com/assets/img/${tiposImagen[item.tipo]}/${item.swapi_id}.jpg`}
         onError={(e) => {
           e.target.src = 'https://placehold.co/400x200?text=Imagen+no+disponible';
           e.target.alt = 'Imagen no disponible';

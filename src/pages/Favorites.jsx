@@ -1,9 +1,31 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useGlobal } from '../hooks/useGlobalReducer';
 import Tarjeta from '../components/Card';
 
 const Favorites = () => {
-  const { estado } = useGlobal();
+  const { estado, dispatch } = useGlobal();
+
+  useEffect(() => {
+    const cargarFavoritos = async () => {
+      try {
+        const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/favorites?user_id=1`);
+        if (!resp.ok) throw new Error("Error al obtener favoritos");
+        const data = await resp.json();
+
+        const favoritos = [];
+
+        data.personajes?.forEach(p => favoritos.push({ ...p, tipo: "people", detalles: p }));
+        data.planetas?.forEach(p => favoritos.push({ ...p, tipo: "planets", detalles: p }));
+        data.vehiculos?.forEach(v => favoritos.push({ ...v, tipo: "vehicles", detalles: v }));
+
+        dispatch({ tipo: "SET_FAVORITOS", favoritos });
+      } catch (error) {
+        console.error("Error al cargar favoritos:", error);
+      }
+    };
+
+    cargarFavoritos();
+  }, [dispatch]);
 
   return (
     <div className="container mt-4">

@@ -29,6 +29,9 @@ const reducer = (state, action) => {
 
     case 'SET_ELEMENTOS':
       return { ...state, elementos: action.elementos };
+    
+    case "SET_FAVORITOS":
+      return { ...estado, favoritos: action.favoritos };
 
     default:
       return state;

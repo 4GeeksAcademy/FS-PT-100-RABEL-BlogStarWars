@@ -1,45 +1,46 @@
-
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Card, Spinner, Row, Col } from 'react-bootstrap';
 import { useGlobal } from '../hooks/useGlobalReducer';
 import Tarjeta from '../components/Card';
 
 const Home = () => {
-  const { tipo = "people" } = useParams();
+  const location = useLocation();
+  const tipo = location.pathname.includes("planet")
+  ? "planets"
+  : location.pathname.includes("vehicle")
+  ? "vehicles"
+  : "people";
+
+
   const { estado, dispatch } = useGlobal();
   
   useEffect(() => {
     const obtenerDatos = async () => {
       try {
         dispatch({ tipo: 'SET_CARGANDO', valor: true });
-        
-        const respuesta = await fetch(`https://www.swapi.tech/api/${tipo}`);
-        const { results } = await respuesta.json();
-        
-        const datos = await Promise.all(
-          results.map(async item => {
-            const detalle = await fetch(item.url);
-            return detalle.json();
-          })
-        );
-        
-        const elementos = datos.map(({ result }) => ({
-          id: result.uid,
-          nombre: result.properties.name,
+
+        const respuesta = await fetch(`https://expert-space-enigma-jjqxwggwj9xx2qg46-3000.app.github.dev/${tipo}`);
+        const datos = await respuesta.json();
+
+       const elementos = datos.map((item) => ({
+          id: item.id,
+          nombre: item.nombre,
           tipo: tipo,
-          detalles: result.properties
+          detalles: item,
+          swapi_id: item.swapi_id // ⚠️ aquí lo guardas aparte
         }));
-        
+
+
         dispatch({ tipo: 'SET_CARGANDO', valor: false });
         dispatch({ tipo: 'SET_ELEMENTOS', elementos });
-        
+
       } catch (error) {
         console.error("Error:", error);
         dispatch({ tipo: 'SET_CARGANDO', valor: false });
       }
     };
-    
+
     obtenerDatos();
   }, [tipo, dispatch]);
 
@@ -67,3 +68,4 @@ const Home = () => {
 };
 
 export default Home;
+
